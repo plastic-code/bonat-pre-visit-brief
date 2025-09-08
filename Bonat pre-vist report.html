@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonat Loyalty - Interactive Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A dashboard-centric SPA remains the best structure. The updated report provides a complete financial history, allowing for more robust comparative charts. The main Dashboard now serves as a high-level summary, incorporating company and investment overviews. The "Financial Deep Dive" and "Investment Profile" sections offer granular detail on trends and deal specifics. This structure is designed for quick access to essential info on the main page, with dedicated sections for deeper analysis. The navigation is linear for quick content discovery. -->
+    <!-- Visualization & Content Choices: 
+        - Dashboard: Goal: Inform (Current Health & Company Summary). Viz: Stat Cards for key Q1 2025 metrics (ARR, LTV:CAC, Runway). New cards for General Overview and Investment Summary. Donut chart for OpEx breakdown. Justification: Consolidates all critical, high-level information in one place.
+        - Financial Deep Dive: Goal: Compare (Trends over time). Viz: Bar Chart (Chart.js) for quarterly and annualized financial comparisons. Line chart for ARR and Subscription growth. Justification: Provides a flexible, accurate way to view performance trends over time.
+        - Investment Profile: Goal: Inform (Deal Structure & RZM Position). Viz: Dual cards detail the Pre-Series A and Series A rounds. Stat cards summarize RZM's cumulative position. Justification: A clear breakdown of investment rounds is essential for stakeholders.
+        - Library/Method: All charts use Chart.js on Canvas, confirming NO SVG/Mermaid.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDFBF8; color: #333; }
+        .nav-button { transition: all 0.3s ease; border-bottom: 2px solid transparent; }
+        .nav-button.active { border-bottom-color: #A58258; color: #A58258; }
+        .nav-button:hover { color: #A58258; }
+        .stat-card { background-color: #FFFFFF; border: 1px solid #EAEAEA; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07); }
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="min-h-screen">
+        <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-10 border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-[#A58258] rounded-full flex items-center justify-center text-white text-xl font-bold">B</div>
+                        <h1 class="text-2xl font-bold text-gray-800">Bonat Loyalty</h1>
+                    </div>
+                    <div class="hidden md:block">
+                        <nav class="flex items-center space-x-4">
+                            <button data-target="dashboard" class="nav-button active px-3 py-2 text-sm font-medium">Dashboard</button>
+                            <button data-target="financials" class="nav-button px-3 py-2 text-sm font-medium">Financial Deep Dive</button>
+                            <button data-target="investment" class="nav-button px-3 py-2 text-sm font-medium">Investment Profile</button>
+                        </nav>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">Days Since Update</p>
+                        <p class="text-sm font-semibold text-gray-700" id="days-since-update">102</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <section id="dashboard" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900">Bonat Loyalty pre-vist update</h2>
+                    <p class="mt-2 text-lg text-gray-600">The team closed a round recently, and these snapshot numbers did not take into consideration the round numbers.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="stat-card"><p class="text-sm font-medium text-gray-500">ARR</p><p class="mt-1 text-3xl font-semibold text-gray-900">SAR 2.88M</p></div>
+                    <div class="stat-card"><p class="text-sm font-medium text-gray-500">LTV:CAC Ratio</p><p class="mt-1 text-3xl font-semibold text-gray-900">2.21</p></div>
+                    <div class="stat-card"><p class="text-sm font-medium text-gray-500">SaaS Gross Margin</p><p class="mt-1 text-3xl font-semibold text-gray-900">72%</p></div>
+                    <div class="stat-card bg-amber-50 border-amber-200"><p class="text-sm font-medium text-amber-600">Cash Runway</p><p class="mt-1 text-3xl font-semibold text-amber-800">~4.4 months</p></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900">Company Summary</h3>
+                        <p class="mt-4 text-gray-600">Bonat Loyalty has grown ARR ~5x between 2022–2024, with strong SaaS margins and institutional investors including STC. However, it faces short runway risk as of March 2025.</p>
+                        <div class="mt-4 text-sm text-gray-600 space-y-2">
+                             <p><strong>Strengths:</strong> SaaS model, market traction, STC validation, GM >60% in Q1-2025</p>
+                             <p><strong>Risks:</strong> Net losses, short runway, ARR dip Q1-2025 vs FY-2024</p>
+                             <p><strong>Growth Plan:</strong> Targeting $5M ARR by end of 2025, Series A+ fundraising, expansion across retail & services</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900">Investment Summary</h3>
+                        <div class="mt-4 text-sm text-gray-600 space-y-2">
+                             <p><strong>RZM Total Invested:</strong> $0.55M USD</p>
+                             <p><strong>RZM Ownership:</strong> 2.82%</p>
+                             <p><strong>Current MOIC:</strong> 1.59x</p>
+                             <p><strong>Lead Investor:</strong> STC</p>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900">General Overview</h3>
+                        <div class="mt-4 text-sm text-gray-600 space-y-2">
+                            <p><strong>Founder:</strong> Saud Binsaeed</p>
+                            <p><strong>Industry:</strong> Enterprise Loyalty Solutions for F&B/Retail</p>
+                            <p><strong>Business Model:</strong> Subscription SaaS</p>
+                            <p><strong>Operations:</strong> KSA (HQ), ADGM (Incorporated)</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Q1 2025 Operating Expenses</h3>
+                        <div class="chart-container !h-64 md:!h-64"><canvas id="expensesChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="financials" class="content-section space-y-8 hidden">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900">Financial Deep Dive</h2>
+                    <p class="mt-2 text-lg text-gray-600">This section provides a detailed view of financial performance over time, including historical highlights and key trends.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900">Historical Performance - Quarterly Breakdown</h3>
+                        <div class="mt-4 chart-container"><canvas id="quarterlyChart"></canvas></div>
+                        <p class="text-xs text-gray-500 italic mt-4" id="quarterly-chart-note">Note: This chart shows the performance for each quarter from 2022 to Q1 2025.</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="text-lg font-medium text-gray-900">Historical Performance - Annual Comparison</h3>
+                        <div class="mt-4 chart-container"><canvas id="annualChart"></canvas></div>
+                        <p class="text-xs text-gray-500 italic mt-4" id="annual-chart-note">Note: FY 2025 values are annualized based on Q1 2025 performance.</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-lg font-medium text-gray-900">Growth Metrics Trend</h3>
+                     <div class="mt-4 chart-container"><canvas id="growthChart"></canvas></div>
+                </div>
+            </section>
+
+            <section id="investment" class="content-section space-y-8 hidden">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900">RZM Investment Profile</h2>
+                    <p class="mt-2 text-lg text-gray-600">Details on RZM's investment rounds, cumulative position, and valuation progression.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="stat-card">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Round 1: Pre-Series A</h3>
+                        <div class="space-y-3 text-sm">
+                            <p><strong>Instrument:</strong> KISS Note</p>
+                            <p><strong>Date:</strong> 6 Mar 2022</p>
+                            <p><strong>RZM Investment:</strong> $0.35M USD</p>
+                            <p><strong>Valuation Cap:</strong> $13M USD</p>
+                            <p><strong>Discount:</strong> 20%</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Round 2: Series A (STC-led)</h3>
+                        <div class="space-y-3 text-sm">
+                             <p><strong>Instrument:</strong> Preferred Equity</p>
+                             <p><strong>Post-Money Valuation:</strong> $31M USD</p>
+                             <p><strong>Round Size:</strong> $6M USD</p>
+                             <p><strong>Lead:</strong> STC ($2M)</p>
+                             <p><strong>RZM Follow-on:</strong> $0.2M USD</p>
+                             <p class="mt-2 font-semibold text-gray-800">Other Investors:</p>
+                             <ul class="mt-1 space-y-1 list-disc list-inside">
+                                 <li>T2: $0.5M</li>
+                                 <li>Arab Bank: $1.5M</li>
+                                 <li>Angel investors: $0.5M</li>
+                             </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="stat-card text-center"><p class="text-sm font-medium text-gray-500">Total RZM Invested</p><p class="mt-1 text-2xl font-semibold text-gray-900">$0.55M USD</p></div>
+                    <div class="stat-card text-center"><p class="text-sm font-medium text-gray-500">RZM Ownership</p><p class="mt-1 text-2xl font-semibold text-gray-900">2.82%</p></div>
+                    <div class="stat-card text-center"><p class="text-sm font-medium text-gray-500">Current MOIC</p><p class="mt-1 text-2xl font-semibold text-gray-900">1.59x</p></div>
+                    <div class="stat-card text-center"><p class="text-sm font-medium text-gray-500">Stake Market Value</p><p class="mt-1 text-2xl font-semibold text-gray-900">SAR 0.873M</p></div>
+                </div>
+
+                <div class="stat-card">
+                    <h3 class="text-lg font-medium text-gray-900">Valuation Growth</h3>
+                    <div class="mt-4 chart-container"><canvas id="valuationChart"></canvas></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            const data = {
+                q1_2025: { revenue: 621000, grossProfit: 387000, netLoss: -366000, arr: 2880000, subscriptions: 1710, ga: 466000, sm: 155000 },
+                fy_2024: { 
+                    revenue: 2393175, grossProfit: 1078983, netLoss: -2546848, arr: 3070000, subscriptions: 1666,
+                    q1: { revenue: 468544, grossProfit: 168814, netLoss: -734556 },
+                    q2: { revenue: 567594, grossProfit: 281737, netLoss: -632240 },
+                    q3: { revenue: 665206, grossProfit: 257607, netLoss: -666901 },
+                    q4: { revenue: 691830, grossProfit: 369825, netLoss: -513149 }
+                },
+                fy_2023: { 
+                    revenue: 1195074, grossProfit: 102952, netLoss: -3825931, arr: 1240000, subscriptions: 1117,
+                    q1: { revenue: 239453, grossProfit: 22518, netLoss: -790706 },
+                    q2: { revenue: 258357, grossProfit: 24015, netLoss: -803946 },
+                    q3: { revenue: 326102, grossProfit: 19339, netLoss: -895776 },
+                    q4: { revenue: 371162, grossProfit: 82115, netLoss: -1335503 }
+                },
+                fy_2022: { 
+                    revenue: 682394, grossProfit: 347700, netLoss: -2276086, arr: 652000, subscriptions: 679,
+                    q1: { revenue: 98153, grossProfit: 46953, netLoss: -267345 },
+                    q2: { revenue: 111997, grossProfit: 72651, netLoss: -364161 },
+                    q3: { revenue: 227548, grossProfit: 103737, netLoss: -670336 },
+                    q4: { revenue: 244695, grossProfit: 124359, netLoss: -974245 }
+                }
+            };
+
+            const chartColors = {
+                primary: 'rgba(165, 130, 88, 0.8)', primaryHover: 'rgba(165, 130, 88, 1)',
+                secondary: 'rgba(51, 51, 51, 0.7)', secondaryHover: 'rgba(51, 51, 51, 0.9)',
+                tertiary: 'rgba(210, 180, 140, 0.7)', tertiaryHover: 'rgba(210, 180, 140, 0.9)',
+                danger: 'rgba(239, 68, 68, 0.7)', dangerHover: 'rgba(239, 68, 68, 0.9)',
+            };
+            
+            let quarterlyChart, annualChart, growthChart, valuationChart, expensesChart;
+
+            function createQuarterlyChart() {
+                const ctx = document.getElementById('quarterlyChart').getContext('2d');
+                if(quarterlyChart) quarterlyChart.destroy();
+                let labels = ['2022 Q1', '2022 Q2', '2022 Q3', '2022 Q4', '2023 Q1', '2023 Q2', '2023 Q3', '2023 Q4', '2024 Q1', '2024 Q2', '2024 Q3', '2024 Q4', '2025 Q1'];
+                let revenueData = [data.fy_2022.q1.revenue, data.fy_2022.q2.revenue, data.fy_2022.q3.revenue, data.fy_2022.q4.revenue, data.fy_2023.q1.revenue, data.fy_2023.q2.revenue, data.fy_2023.q3.revenue, data.fy_2023.q4.revenue, data.fy_2024.q1.revenue, data.fy_2024.q2.revenue, data.fy_2024.q3.revenue, data.fy_2024.q4.revenue, data.q1_2025.revenue];
+                let grossProfitData = [data.fy_2022.q1.grossProfit, data.fy_2022.q2.grossProfit, data.fy_2022.q3.grossProfit, data.fy_2022.q4.grossProfit, data.fy_2023.q1.grossProfit, data.fy_2023.q2.grossProfit, data.fy_2023.q3.grossProfit, data.fy_2023.q4.grossProfit, data.fy_2024.q1.grossProfit, data.fy_2024.q2.grossProfit, data.fy_2024.q3.grossProfit, data.fy_2024.q4.grossProfit, data.q1_2025.grossProfit];
+                let netLossData = [data.fy_2022.q1.netLoss, data.fy_2022.q2.netLoss, data.fy_2022.q3.netLoss, data.fy_2022.q4.netLoss, data.fy_2023.q1.netLoss, data.fy_2023.q2.netLoss, data.fy_2023.q3.netLoss, data.fy_2023.q4.netLoss, data.fy_2024.q1.netLoss, data.fy_2024.q2.netLoss, data.fy_2024.q3.netLoss, data.fy_2024.q4.netLoss, data.q1_2025.netLoss];
+                
+                quarterlyChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Revenue', data: revenueData, backgroundColor: chartColors.primary },
+                            { label: 'Gross Profit', data: grossProfitData, backgroundColor: chartColors.tertiary },
+                            { label: 'Net Loss', data: netLossData, backgroundColor: chartColors.danger }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: false, 
+                                ticks: { 
+                                    callback: value => `SAR ${value/1000}k` 
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'SAR (per quarter)'
+                                }
+                            } 
+                        }, 
+                        plugins: { 
+                            legend: { position: 'top' }, 
+                            tooltip: { mode: 'index', intersect: false } 
+                        } 
+                    }
+                });
+            }
+
+            function createAnnualChart() {
+                const ctx = document.getElementById('annualChart').getContext('2d');
+                if(annualChart) annualChart.destroy();
+                let labels = ['FY 2022', 'FY 2023', 'FY 2024', 'FY 2025 (Annualized)'];
+                let revenueData = [data.fy_2022.revenue, data.fy_2023.revenue, data.fy_2024.revenue, data.q1_2025.revenue * 4];
+                let grossProfitData = [data.fy_2022.grossProfit, data.fy_2023.grossProfit, data.fy_2024.grossProfit, data.q1_2025.grossProfit * 4];
+                let netLossData = [data.fy_2022.netLoss, data.fy_2023.netLoss, data.fy_2024.netLoss, data.q1_2025.netLoss * 4];
+
+                annualChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Revenue', data: revenueData, backgroundColor: chartColors.primary },
+                            { label: 'Gross Profit', data: grossProfitData, backgroundColor: chartColors.tertiary },
+                            { label: 'Net Loss', data: netLossData, backgroundColor: chartColors.danger }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: false, 
+                                ticks: { 
+                                    callback: value => `SAR ${value/1000}k` 
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'SAR (Annualized)'
+                                }
+                            } 
+                        }, 
+                        plugins: { 
+                            legend: { position: 'top' }, 
+                            tooltip: { mode: 'index', intersect: false } 
+                        } 
+                    }
+                });
+            }
+
+            function setupNavigation() {
+                navButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetId = button.dataset.target;
+                        navButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        contentSections.forEach(section => section.id === targetId ? section.classList.remove('hidden') : section.classList.add('hidden'));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                });
+            }
+
+            function createExpensesChart() {
+                const ctx = document.getElementById('expensesChart').getContext('2d');
+                if(expensesChart) expensesChart.destroy();
+                expensesChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['General & Admin', 'Sales & Marketing'],
+                        datasets: [{ data: [data.q1_2025.ga, data.q1_2025.sm], backgroundColor: [chartColors.primary, chartColors.tertiary], borderColor: '#FDFBF8', borderWidth: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.label}: ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR', minimumFractionDigits: 0 }).format(c.parsed)}` } } } }
+                });
+            }
+
+            function createGrowthChart() {
+                const ctx = document.getElementById('growthChart').getContext('2d');
+                if(growthChart) growthChart.destroy();
+                growthChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['FY 2022', 'FY 2023', 'FY 2024', 'Q1 2025'],
+                        datasets: [
+                            { 
+                                label: 'ARR (in SAR)', 
+                                data: [data.fy_2022.arr, data.fy_2023.arr, data.fy_2024.arr, data.q1_2025.arr], 
+                                borderColor: chartColors.primary,
+                                backgroundColor: chartColors.primary,
+                                yAxisID: 'y'
+                            },
+                            { 
+                                label: 'Total Subscriptions', 
+                                data: [data.fy_2022.subscriptions, data.fy_2023.subscriptions, data.fy_2024.subscriptions, data.q1_2025.subscriptions], 
+                                borderColor: chartColors.secondary,
+                                backgroundColor: chartColors.secondary,
+                                yAxisID: 'y1' 
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', display: true, position: 'left', title: {display: true, text: 'ARR (SAR)'} }, y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: {display: true, text: 'Subscriptions'} } }, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false } } }
+                });
+            }
+            
+             function createValuationChart() {
+                const ctx = document.getElementById('valuationChart').getContext('2d');
+                if(valuationChart) valuationChart.destroy();
+                valuationChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Pre-Series A Cap', 'Series A Post-Money'],
+                        datasets: [{ label: 'Valuation in USD', data: [13000000, 31000000], backgroundColor: [chartColors.primary, chartColors.secondary] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: value => `$${value/1000000}M`} } }, plugins: { legend: { display: false } } }
+                });
+            }
+
+            setupNavigation();
+            createExpensesChart();
+            createQuarterlyChart();
+            createAnnualChart();
+            createGrowthChart();
+            createValuationChart();
+        });
+    </script>
+</body>
+</html>
